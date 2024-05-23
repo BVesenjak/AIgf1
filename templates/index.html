@@ -4,6 +4,7 @@
     <title>AI Girlfriend</title>
 </head>
 <body>
+    <h1>Welcome, {{ current_user.username }}</h1>
     <h1>AVA</h1>
     <form method="POST" action="/send_message">
         <input type="text" name="human_input" placeholder="enter...">
@@ -29,5 +30,6 @@
             form.reset();
         });
     </script>
+    <a href="{{ url_for('logout') }}">Logout</a>
 </body>
 </html>
