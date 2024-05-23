@@ -11,6 +11,7 @@ AI girlfriend
 +pip install python-dotenv
 +pip install pygame
 +pip install Flask
++pip install flask-login
 +pip install openai
 +run with "python app.py"
 +
