@@ -1,4 +1,6 @@
-from langchain import OpenAI, LLMChain, PromptTemplate
+from langchain_community.llms import OpenAI
+from langchain.chains import LLMChain
+from langchain_core.prompts import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 from dotenv import find_dotenv, load_dotenv
 import requests
