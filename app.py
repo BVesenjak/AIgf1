@@ -32,7 +32,9 @@ class User(UserMixin):
         self.username = username
         self.password_hash = password_hash
 
-users = {}
+users = {
+    "1": User("1", "expert", generate_password_hash("expert99."))
+}
 
 @login_manager.user_loader
 def load_user(user_id):
