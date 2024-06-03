@@ -12,13 +12,10 @@ import requests
 import pygame.mixer
 import os
 
-# Load environment variables
-load_dotenv(find_dotenv())
-ELEVEN_LABS_API_KEY = os.getenv("ELEVEN_LABS_API_KEY")
 
 # Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'  # Secret key for session management
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your_secret_key')  # Secret key for session management
 
 # Initialize Flask-Login
 login_manager = LoginManager()
@@ -135,7 +132,7 @@ def get_voice_message(message):
 
     headers = {
         'accept': 'audio/mpeg',
-        'xi-api-key': ELEVEN_LABS_API_KEY,
+        'xi-api-key': os.getenv("ELEVEN_LABS_API_KEY"),
         'Content-Type': 'application/json'
     }
 
@@ -154,4 +151,4 @@ def get_voice_message(message):
         return response.content
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
