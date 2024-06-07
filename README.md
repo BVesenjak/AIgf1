@@ -16,4 +16,6 @@ AI girlfriend
 +run with "python app.py"
 +
 _____________________________
-added install pydub and instal ffmpeg
++ install pydub
++ instal ffmpeg
++ install gtts
