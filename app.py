@@ -12,6 +12,7 @@ import requests
 import pygame.mixer
 import os
 
+load_dotenv()
 
 # Initialize Flask app
 app = Flask(__name__)
