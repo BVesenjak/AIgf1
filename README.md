@@ -15,3 +15,5 @@ AI girlfriend
 +pip install openai
 +run with "python app.py"
 +
+_____________________________
+added install pydub and instal ffmpeg
