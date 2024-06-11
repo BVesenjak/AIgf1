@@ -2,34 +2,89 @@
 <html>
 <head>
     <title>AI Girlfriend</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .image-container {
+            width: 150px;
+            height: 250px;
+            padding: 50px;
+            box-sizing: content-box;
+        }
+
+        .glowing-frame {
+            animation: breathe 1.5s infinite;
+        }
+
+        @keyframes breathe {
+            0% { box-shadow: 0 0 10px red; }
+            50% { box-shadow: 0 0 20px red; }
+            100% { box-shadow: 0 0 10px red; }
+        }
+    </style>
 </head>
 <body>
-    <h1>Welcome, {{ current_user.username }}</h1>
-    <h1>AVA</h1>
-    <form method="POST" action="/send_message">
-        <input type="text" name="human_input" placeholder="enter...">
-        <button type="submit">Send</button>
-    </form>
-    <div id="response_message"></div>
+    <div class="container mt-5">
+        <div class="row">
+            <div class="col-md-6 offset-md-3 text-center">
+                <img src="{{ url_for('static', filename='girl1.jpg') }}" class="image-container" id="avatar">
+                <h1 class="text-center">Welcome, {{ current_user.username }}</h1>
+                <h1 class="text-center">AVA</h1>
+                <form method="POST" action="/send_message" id="message-form">
+                    <div class="form-group">
+                        <input type="text" name="human_input" class="form-control" placeholder="Enter your message...">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Send</button>
+                </form>
+                <div id="response_message" class="mt-3"></div>
 
+                <h2>Response:</h2>
+                <p id="response-text"></p>
+                <audio id="response-audio" controls>
+                    <source id="audio-source" src="" type="audio/mpeg">
+                </audio>
+
+                <a href="{{ url_for('logout') }}" class="btn btn-secondary btn-block mt-3">Logout</a>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
     <script>
-        const form = document.querySelector('form');
+        const form = document.getElementById('message-form');
         const responseMessage = document.getElementById('response_message');
+        const responseText = document.getElementById('response-text');
+        const audioSource = document.getElementById('audio-source');
+        const responseAudio = document.getElementById('response-audio');
+        const avatar = document.getElementById('avatar');
 
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+            avatar.classList.add('glowing-frame');
             const formData = new FormData(form);
             fetch('/send_message', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => response.text())
+            .then(response => response.json())
             .then(data => {
-                responseMessage.innerHTML = data;
+                responseText.innerText = data.response;
+                if (data.audio_file) {
+                    // Add a unique query parameter to the audio file URL
+                    const audioFileUrl = `/download_audio?file_path=${data.audio_file}&t=${new Date().getTime()}`;
+                    audioSource.src = audioFileUrl;
+                    responseAudio.load();
+                    responseAudio.onloadeddata = () => {
+                        avatar.classList.remove('glowing-frame');
+                        responseAudio.play();
+                    };
+                } else {
+                    avatar.classList.remove('glowing-frame');
+                }
             });
             form.reset();
         });
     </script>
-    <a href="{{ url_for('logout') }}">Logout</a>
 </body>
 </html>
