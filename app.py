@@ -1,6 +1,4 @@
-# app.py
-
-from flask import Flask, render_template, request, redirect, url_for, flash
+from flask import Flask, render_template, request, redirect, url_for, flash, send_file, jsonify
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import find_dotenv, load_dotenv
@@ -9,21 +7,18 @@ from langchain.chains import LLMChain
 from langchain_core.prompts import PromptTemplate
 from langchain.memory import ConversationBufferWindowMemory
 import requests
-import pygame.mixer
 import os
+from pydub import AudioSegment
 
 load_dotenv()
 
-# Initialize Flask app
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your_secret_key')  # Secret key for session management
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'your_secret_key')
 
-# Initialize Flask-Login
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = 'login'
 
-# Mock database
 class User(UserMixin):
     def __init__(self, id, username, password_hash):
         self.id = id
@@ -38,7 +33,6 @@ users = {
 def load_user(user_id):
     return users.get(user_id)
 
-# Define route for login
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -51,14 +45,12 @@ def login():
         flash('Invalid username or password')
     return render_template('login.html')
 
-# Define route for logout
 @app.route('/logout')
-@login_required  # Ensure the user is logged in to access this route
+@login_required
 def logout():
     logout_user()
     return redirect(url_for('login'))
 
-# Define route for signup
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
     if request.method == 'POST':
@@ -72,27 +64,23 @@ def signup():
         return redirect(url_for('home'))
     return render_template('signup.html')
 
-# Home route
 @app.route("/")
-@login_required  # Ensure the user is logged in to access this route
+@login_required
 def home():
     return render_template("index.html")
 
-# Route to handle AI interaction
 @app.route('/send_message', methods=['POST'])
-@login_required  # Ensure the user is logged in to access this route
+@login_required
 def send_message():
     human_input = request.form['human_input']
     message = get_response_from_ai(human_input)
-    get_voice_message(message)
-    return message
+    audio_file = get_voice_message(message)
+    return jsonify({'response': message, 'audio_file': audio_file})
 
-# Function to read text from a file
 def read_text_from_file(file_path):
     with open(file_path, 'r') as file:
         return file.read().strip()
 
-# Function to interact with AI
 def get_response_from_ai(human_input):
     file_path = 'gfprompt.txt'
     prompt_text = read_text_from_file(file_path)
@@ -120,7 +108,6 @@ def get_response_from_ai(human_input):
 
     return output
 
-# Function to get voice message
 def get_voice_message(message):
     payload = {
         "text": message,
@@ -139,17 +126,22 @@ def get_voice_message(message):
 
     response = requests.post('https://api.elevenlabs.io/v1/text-to-speech/21m00Tcm4TlvDq8ikWAM?optimize_streaming_latency=0', json=payload, headers=headers)
     if response.status_code == 200 and response.content:
-        with open('audio.mp3', 'wb') as f:
+        audio_path = '/tmp/audio.mp3'
+        with open(audio_path, 'wb') as f:
             f.write(response.content)
 
-        pygame.mixer.init()
-        pygame.mixer.music.load('audio.mp3')
-        pygame.mixer.music.play()
-        while pygame.mixer.music.get_busy():
-            pygame.time.Clock().tick(10)
-        pygame.mixer.quit()
+        audio = AudioSegment.from_mp3(audio_path)
+        audio.export(audio_path, format="mp3")
 
-        return response.content
+        return audio_path
+
+    return None
+
+@app.route('/download_audio')
+@login_required
+def download_audio():
+    audio_file_path = request.args.get('file_path')
+    return send_file(audio_file_path, as_attachment=True)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)), debug=True)
